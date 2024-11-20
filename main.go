@@ -3,6 +3,7 @@ package main
 import (
 	"booking-app/helper"
 	"fmt"
+	"time"
 )
 
 // := does not work for global variables in Go i.e packages
@@ -34,6 +35,7 @@ func main() {
 
 		if isValidName && isValidEmail && isValidTicketNumber {
 			bookTicket(userTickets, firstName, lastName, emailAddress)
+			sendTicket(userTickets, firstName, lastName, emailAddress)
 
 			//  call func to print first names
 			firstNames := FirstNames()
@@ -116,4 +118,12 @@ func bookTicket(userTickets uint, firstName string, lastName string, emailAddres
 
 	fmt.Printf("Thank you %v %v for booking %v tickets. You will receive a confirmation email at %v \n", firstName, lastName, userTickets, emailAddress)
 	fmt.Printf("%v tickets remaining for the %v are left\n", remainingTickets, conferenceName)
+}
+
+func sendTicket(userTickets uint, FirstName string, lastName string, emailAddress string) {
+	time.Sleep(10 * time.Second)
+	var ticket = fmt.Sprintf("%v tickets for %v %v", userTickets, FirstName, lastName)
+	fmt.Println("###############")
+	fmt.Printf("Sending ticket:\n %v \nto email address %v\n", ticket, emailAddress)
+	fmt.Println("###############")
 }
