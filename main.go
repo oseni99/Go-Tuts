@@ -3,6 +3,7 @@ package main
 import (
 	"booking-app/helper"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -24,39 +25,42 @@ type UserData struct {
 	numberOfTickets uint
 }
 
+var wg = sync.WaitGroup{}
+
 func main() {
 
 	greetUsers()
 
-	for {
+	firstName, lastName, emailAddress, userTickets := getUserInput()
+	isValidName, isValidEmail, isValidTicketNumber := helper.ValidateUserInput(firstName, lastName, emailAddress, userTickets, remainingTickets)
 
-		firstName, lastName, emailAddress, userTickets := getUserInput()
-		isValidName, isValidEmail, isValidTicketNumber := helper.ValidateUserInput(firstName, lastName, emailAddress, userTickets, remainingTickets)
+	if isValidName && isValidEmail && isValidTicketNumber {
+		bookTicket(userTickets, firstName, lastName, emailAddress)
+		//  make it concurrent i.e multi threaded with just go
+		//  The default go routine doesnt tell it to wait so we have to teo=ll it itslf how many go routines it should wait for
+		wg.Add(1)
+		go sendTicket(userTickets, firstName, lastName, emailAddress)
 
-		if isValidName && isValidEmail && isValidTicketNumber {
-			bookTicket(userTickets, firstName, lastName, emailAddress)
-			sendTicket(userTickets, firstName, lastName, emailAddress)
+		//  call func to print first names
+		firstNames := FirstNames()
+		fmt.Printf("The first names of bookings are: %v\n", firstNames)
 
-			//  call func to print first names
-			firstNames := FirstNames()
-			fmt.Printf("The first names of bookings are: %v\n", firstNames)
-
-			if remainingTickets == 0 {
-				// end the program
-				fmt.Println("Our conference is booked out. Come back next year")
-				break
-			}
-		} else {
-			if !isValidName {
-				fmt.Println("Kindly check your first name and last name for changes. Both must be at least 3 characters long.")
-			} else if !isValidEmail {
-				fmt.Println("Kindly enter a valid email address that contains an '@' symbol.")
-			} else if !isValidTicketNumber {
-				fmt.Println("Number of tickets is invalid. Ensure you are booking at least 1 ticket and not more than the available tickets.")
-			}
+		if remainingTickets == 0 {
+			// end the program
+			fmt.Println("Our conference is booked out. Come back next year")
 		}
-
+	} else {
+		if !isValidName {
+			fmt.Println("Kindly check your first name and last name for changes. Both must be at least 3 characters long.")
+		} else if !isValidEmail {
+			fmt.Println("Kindly enter a valid email address that contains an '@' symbol.")
+		} else if !isValidTicketNumber {
+			fmt.Println("Number of tickets is invalid. Ensure you are booking at least 1 ticket and not more than the available tickets.")
+		}
 	}
+	//  basically tells the code to wait until all routines are done before closing
+	wg.Wait()
+
 }
 
 func greetUsers() {
@@ -126,4 +130,6 @@ func sendTicket(userTickets uint, FirstName string, lastName string, emailAddres
 	fmt.Println("###############")
 	fmt.Printf("Sending ticket:\n %v \nto email address %v\n", ticket, emailAddress)
 	fmt.Println("###############")
+	//  This now removes the thread that was started after it finished executing
+	wg.Done()
 }
